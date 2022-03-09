@@ -15,8 +15,8 @@ from collections import defaultdict
 from pypfopt.hierarchical_portfolio import HRPOpt
 from sigma import TradeTwoSigma
 
-now = pd.Timestamp('2022-2-25', tz='UTC')
-DATA_STORE = 'assets_2_28_22.h5'
+now = pd.Timestamp('2022-3-4', tz='UTC')
+DATA_STORE = 'assets_3_7_22.h5'
 sigma_value = TradeTwoSigma('f81d5fdc-89fb-4795-b35a-13792a76c203').calculate_portfolio(
     asofDate=now - pd.Timedelta(days=2))
 kept_pos = TradeTwoSigma('f81d5fdc-89fb-4795-b35a-13792a76c203').list_position(reformat=True)
@@ -43,7 +43,8 @@ def load_predictions(bundle):
     sigma_sids = defaultdict()
     for t in tickers:
         if t in TradeTwoSigma().universe:
-            sigma_sids[t] = TradeTwoSigma().lookup_figi(str(t))['FIGI']
+            try: sigma_sids[t] = TradeTwoSigma().lookup_figi(str(t))['FIGI']
+            except TypeError: tickers.remove(t)
         else:
             print(t)
             tickers.remove(t)
@@ -146,7 +147,7 @@ def rebalance_hrp_sigma(context, data):
             # share = math.floor(weight_ * sigma_value / prices[asset].dropna().tail(1))
             ticker = sigma_sids[str(asset).split('[')[1].split(']')[0]]
             if ticker in kept_pos.keys():
-                share = share - kept_pos[ticker]['totalShares']
+                share -= kept_pos[ticker]['totalShares']
             TradeTwoSigma('f81d5fdc-89fb-4795-b35a-13792a76c203').submit_order(f"{ticker}", share)
 
 
